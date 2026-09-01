@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width", initial-scale="1.0">
+        <title>Inkwell - Dashboard</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <header class="masthead">
+            <div class="masthead-inner">
+            <div class="wordmark">Ink<span>well</span></div>
+            <nav class="site-nav">
+                <a href="index.html">Home</a>
+                <span data-auth-slot style="display:contents"></span>
+            </nav>
+            </div>
+        </header>
+        <main class="container" id="dashboardRoot" style="display:none;">
+            <h1 id="greeting">Dashboard</h1>
+            <div class="stat-row">
+                <div class="stat">
+                    <span class="num" id="statCount">0</span>
+                    <span class="label">Posts published</span>
+                </div>
+                <div class="stat">
+                    <span class="num" id="statLast">N/A</span>
+                    <span class="label">Most recent post</span>
+                </div>
+            </div>
+            <a href="create-blog.html" class="btn btn-primary" style="margin-top: 20px;display:inline-block;">Create New Post</a>
+            <h2 style="font-size:1.2rem; margin-bottom: 4px;">Your Posts</h2>
+            <div id="myPosts"></div>
+        </main>
+
+        <script src="script.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded',function(){
+                const user=currentUser();
+                if(!user){
+                    location.href='login.html';
+                    return;
+                }
+                document.getElementById('dashRoot').style.display='block';
+                document.getElementById('greeting').textContent='Welcome, ' + user.name.split(' ')[0];
+                const allPosts=getPosts();
+                const mine = allPosts.filter(p=>p.author===user.name);
+
+                document.getElementById('statCount').textContent=mine.length;
+                document.getElementById('statLatest').textContent=mine.length?new Date(mine.sort((a, b) => new Date(b.date) - new Date(a.date))[0].date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}): '-';
+
+                const list =document.getElementById('myPosts');
+                if(mine.length===0){
+                    list.innerHTML='<div class="empty">You haven\'t written anything yet.</div>';
+                    return;
+                }
+                list.innerHTML=mine.map(p=>`<div class="dash-post-row" data-id="${p.id}">
+                    <div>
+                        <h3>${escapeHTML(p.title)}</h3>
+                        <div class="post-meta">${new Date(p.date).toDateString('en-US',{month:'short', day:'numeric', year:'numeric'})}</div>
+                    </div>
+                    <button class="btn-danger" onclick="deletePost('${p.id}')">Delete</button>
+                </div>`).join(''
+                    );
+            });
+            function deletePost(id){
+                const posts=getPosts().filter(p=>p.id!==id);
+                savePosts(posts);
+                location.reload();
+            }
+            function escapeHTML(str){
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+        </script>
+
+    </body>
+</html>

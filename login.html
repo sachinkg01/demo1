@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Log in</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">Ink<span>well</span></div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <span data-auth-slot style="display:contents"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <h1>Welcome back</h1>
+  <p class="form-note" style="margin-bottom:24px;">New here? <a href="register.html">Create an account</a>.</p>
+
+  <div class="error-message" id="errorBox"></div>
+
+  <form class="stack" id="loginForm">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" required>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" required>
+    </div>
+    <button type="submit" class="btn-primary">Log in</button>
+  </form>
+</main>
+
+<script src="script.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    const errorBox = document.getElementById('errorBox');
+
+    const user = getUsers().find(u => u.email === email && u.password === password);
+    if (!user) {
+      errorBox.textContent = 'Email or password is incorrect.';
+      errorBox.style.display = 'block';
+      return;
+    }
+
+    setSession(email);
+    location.href = 'dashboard.html';
+  });
+</script>
+
+</body>
+</html>
