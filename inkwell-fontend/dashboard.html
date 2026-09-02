@@ -56,7 +56,7 @@
                 }
                 list.innerHTML=mine.map(p=>`<div class="dash-post-row" data-id="${p.id}">
                     <div>
-                        <h3>${escapeHTML(p.title)}</h3>
+                        <h3><a href="post.html?id=${p._id}">${escapeHTML(p.title)}</a></h3>
                         <div class="post-meta">${new Date(p.date).toDateString('en-US',{month:'short', day:'numeric', year:'numeric'})}</div>
                     </div>
                     <button class="btn-danger" onclick="deletePost('${p.id}')">Delete</button>

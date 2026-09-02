@@ -32,7 +32,7 @@
                 list.innerHTML = posts.map(p => `
       <article class="post-entry">
         <div class="post-meta">${formatDate(p.date)} · ${p.author}</div>
-        <h2>${escapeHTML(p.title)}</h2>
+        <h2><a href="post.html?id=${p._id}">${escapeHTML(p.title)}</a></h2>
         <p class="post-excerpt">${escapeHTML(p.content).slice(0, 160)}${p.content.length > 160 ? '…' : ''}</p>
       </article>
     `).join('');

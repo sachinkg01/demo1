@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap');
+
 :root {
   --paper: #FAF6EE;
   --surface: #FFFFFF;
@@ -36,6 +38,7 @@ a:hover { text-decoration: underline; }
   margin: 0 auto;
   padding: 0 24px;
 }
+
 /* ---- Header / Masthead ---- */
 .masthead {
   border-bottom: 1px solid var(--border);
@@ -101,6 +104,15 @@ main {
 .post-entry h2 {
   font-size: 1.5rem;
   margin-bottom: 8px;
+}
+
+.post-entry h2 a,
+.dash-post-row h3 a {
+  color: var(--ink);
+}
+.post-entry h2 a:hover,
+.dash-post-row h3 a:hover {
+  color: var(--teal);
 }
 
 .post-excerpt {
