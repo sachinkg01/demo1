@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Post</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">Ink<span>well</span></div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <span data-auth-slot style="display:contents"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <p style="margin-bottom:20px;"><a href="index.html">&larr; Back to all posts</a></p>
+  <div id="postDetail"><p class="form-note">Loading…</p></div>
+</main>
+
+<script src="script.js"></script>
+<script>
+  async function renderPost() {
+    const detail = document.getElementById('postDetail');
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+
+    if (!id) {
+      detail.innerHTML = '<div class="error-message" style="display:block;">No post specified.</div>';
+      return;
+    }
+
+    try {
+      const post = await apiRequest(`/posts/${id}`);
+      document.title = `Inkwell — ${post.title}`;
+      detail.innerHTML = `
+        <div class="post-meta">${formatDate(post.createdAt)} · ${escapeHTML(post.authorName)} · <span class="category-tag">${escapeHTML(post.category)}</span></div>
+        <h1>${escapeHTML(post.title)}</h1>
+        <p style="white-space: pre-wrap; line-height: 1.7;">${escapeHTML(post.content)}</p>
+      `;
+    } catch (err) {
+      detail.innerHTML = `<div class="error-message" style="display:block;">Could not load this post: ${escapeHTML(err.message)}</div>`;
+    }
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  document.addEventListener('DOMContentLoaded', renderPost);
+</script>
+
+</body>
+</html>

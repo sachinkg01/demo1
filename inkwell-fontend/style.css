@@ -129,6 +129,37 @@ main {
   margin-top: 20px;
 }
 
+/* ---- Search & filter bar ---- */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: 'Work Sans', sans-serif;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+#searchInput { flex: 1; min-width: 180px; }
+#categorySelect { min-width: 160px; }
+
+.filter-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.category-tag {
+  color: var(--gold);
+  font-weight: 500;
+}
+
 /* ---- Forms ---- */
 form.stack {
   display: flex;

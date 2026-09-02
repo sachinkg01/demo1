@@ -1,65 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width", initial-scale="1.0">
-        <title>Inkwell - Write a post</title>
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-        <header class="masthead">
-            <div class="masthead-inner">
-            <div class="wordmark">Ink<span>well</span></div>
-            <nav class="site-nav">
-                <a href="index.html">Home</a>
-                <span data-auth-slot style="display:contents"></span>
-            </nav>
-            </div>
-        </header>
-        <main class="container" id="formRoot" style="display:none;">
-            <h1>Write a post</h1>
-            <form  class="stack" id="postForm" style="max-width: 600px;">
-                <div class="field">
-                <label for="title">Title:</label>
-                <input type="text" id="title" " required>
-                </div>
-                <div class="field">
-                <label for="content">Content:</label>
-                <textarea id="content" required></textarea>
-                </div>
-                <div>
-                <button type="submit" class=" btn-primary">Publish Post</button>
-                <a href="dashboard.html"class="btn btn-outline" style="margin-left: 10px;">Cancel</a>
-                </div>
-            </form>
-            </main>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Write a post</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-            <script src="script.js"></script>
-            <script>
-                document.addEventListener('DOMContentLoaded',function(){
-                    const user=currentUser();
-                    if(!user){
-                        location.href='login.html';
-                        return;
-                    }
-                    document.getElementById('formRoot').style.display='block';
-                });
-                document.getElementById('postForm').addEventListener('submit',function(e){
-                    e.preventDefault();
-                    const user=currentUser();
-                    const title=document.getElementById('title').value.trim();
-                    const content=document.getElementById('content').value.trim();
-                    const posts=getPosts();
-                    posts.push({
-                        id:'post-'+Date.now(),
-                        title,
-                        content,
-                        author:user.name,
-                        date:new Date().toISOString().slice(0,10)
-                    });
-                    savePosts(posts);
-                    location.href='dashboard.html';
-                });
-            </script>
-    </body>
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">Ink<span>well</span></div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <span data-auth-slot style="display:contents"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container" id="formRoot" style="display:none;">
+  <h1>Write a new post</h1>
+
+  <div class="error-message" id="errorBox"></div>
+
+  <form class="stack" id="postForm" style="max-width:600px;">
+    <div class="field">
+      <label for="title">Title</label>
+      <input type="text" id="title" required>
+    </div>
+    <div class="field">
+      <label for="content">Content</label>
+      <textarea id="content" required></textarea>
+    </div>
+    <div class="field">
+      <label for="category">Category</label>
+      <select id="category" class="filter-input" style="width:100%;"></select>
+    </div>
+    <div>
+      <button type="submit" class="btn-primary" id="submitBtn">Publish post</button>
+      <a href="dashboard.html" class="btn btn-outline" style="margin-left:10px;">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<script src="script.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+      return;
+    }
+    document.getElementById('formRoot').style.display = 'block';
+
+    try {
+      const categories = await apiRequest('/posts/meta/categories');
+      document.getElementById('category').innerHTML =
+        categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    } catch (err) {
+      document.getElementById('category').innerHTML = '<option value="General">General</option>';
+    }
+  });
+
+  document.getElementById('postForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+    const category = document.getElementById('category').value;
+    const errorBox = document.getElementById('errorBox');
+    const submitBtn = document.getElementById('submitBtn');
+
+    errorBox.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Publishing…';
+
+    try {
+      await apiRequest('/posts', {
+        method: 'POST',
+        body: JSON.stringify({ title, content, category })
+      });
+      location.href = 'dashboard.html';
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Publish post';
+    }
+  });
+</script>
+
+</body>
 </html>

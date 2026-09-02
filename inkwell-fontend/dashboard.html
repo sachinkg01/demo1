@@ -1,79 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width", initial-scale="1.0">
-        <title>Inkwell - Dashboard</title>
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-        <header class="masthead">
-            <div class="masthead-inner">
-            <div class="wordmark">Ink<span>well</span></div>
-            <nav class="site-nav">
-                <a href="index.html">Home</a>
-                <span data-auth-slot style="display:contents"></span>
-            </nav>
-            </div>
-        </header>
-        <main class="container" id="dashboardRoot" style="display:none;">
-            <h1 id="greeting">Dashboard</h1>
-            <div class="stat-row">
-                <div class="stat">
-                    <span class="num" id="statCount">0</span>
-                    <span class="label">Posts published</span>
-                </div>
-                <div class="stat">
-                    <span class="num" id="statLast">N/A</span>
-                    <span class="label">Most recent post</span>
-                </div>
-            </div>
-            <a href="create-blog.html" class="btn btn-primary" style="margin-top: 20px;display:inline-block;">Create New Post</a>
-            <h2 style="font-size:1.2rem; margin-bottom: 4px;">Your Posts</h2>
-            <div id="myPosts"></div>
-        </main>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-        <script src="script.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded',function(){
-                const user=currentUser();
-                if(!user){
-                    location.href='login.html';
-                    return;
-                }
-                document.getElementById('dashRoot').style.display='block';
-                document.getElementById('greeting').textContent='Welcome, ' + user.name.split(' ')[0];
-                const allPosts=getPosts();
-                const mine = allPosts.filter(p=>p.author===user.name);
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">Ink<span>well</span></div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <span data-auth-slot style="display:contents"></span>
+    </nav>
+  </div>
+</header>
 
-                document.getElementById('statCount').textContent=mine.length;
-                document.getElementById('statLatest').textContent=mine.length?new Date(mine.sort((a, b) => new Date(b.date) - new Date(a.date))[0].date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}): '-';
+<main class="container" id="dashRoot" style="display:none;">
+  <h1 id="greeting">Dashboard</h1>
 
-                const list =document.getElementById('myPosts');
-                if(mine.length===0){
-                    list.innerHTML='<div class="empty">You haven\'t written anything yet.</div>';
-                    return;
-                }
-                list.innerHTML=mine.map(p=>`<div class="dash-post-row" data-id="${p.id}">
-                    <div>
-                        <h3><a href="post.html?id=${p._id}">${escapeHTML(p.title)}</a></h3>
-                        <div class="post-meta">${new Date(p.date).toDateString('en-US',{month:'short', day:'numeric', year:'numeric'})}</div>
-                    </div>
-                    <button class="btn-danger" onclick="deletePost('${p.id}')">Delete</button>
-                </div>`).join(''
-                    );
-            });
-            function deletePost(id){
-                const posts=getPosts().filter(p=>p.id!==id);
-                savePosts(posts);
-                location.reload();
-            }
-            function escapeHTML(str){
-                const div = document.createElement('div');
-                div.textContent = str;
-                return div.innerHTML;
-            }
-        </script>
+  <div class="stat-row">
+    <div class="stat">
+      <span class="num" id="statCount">0</span>
+      <span class="label">Posts published</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="statLatest">—</span>
+      <span class="label">Most recent post</span>
+    </div>
+  </div>
 
-    </body>
+  <a href="create-blog.html" class="btn btn-primary" style="margin-bottom:28px; display:inline-block;">Write a new post</a>
+
+  <h2 style="font-size:1.2rem; margin-bottom:4px;">Your posts</h2>
+  <div id="myPosts"><p class="form-note">Loading…</p></div>
+</main>
+
+<script src="script.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+      return;
+    }
+
+    document.getElementById('dashRoot').style.display = 'block';
+    document.getElementById('greeting').textContent = `Welcome back, ${getUserName().split(' ')[0]}`;
+
+    await loadMyPosts();
+  });
+
+  async function loadMyPosts() {
+    const list = document.getElementById('myPosts');
+    try {
+      const mine = await apiRequest('/posts/mine');
+
+      document.getElementById('statCount').textContent = mine.length;
+      document.getElementById('statLatest').textContent = mine.length
+        ? new Date(mine[0].createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : '—';
+
+      if (mine.length === 0) {
+        list.innerHTML = '<div class="empty-state">You haven\'t written anything yet.</div>';
+        return;
+      }
+
+      list.innerHTML = mine.map(p => `
+        <div class="dash-post-row" data-id="${p._id}">
+          <div>
+            <h3><a href="post.html?id=${p._id}">${escapeHTML(p.title)}</a></h3>
+            <div class="post-meta">${new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · ${escapeHTML(p.category)}</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <a href="edit-post.html?id=${p._id}" class="btn btn-outline" style="padding:6px 12px; font-size:0.82rem;">Edit</a>
+            <button class="btn-danger" onclick="deletePost('${p._id}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      list.innerHTML = `<div class="error-message" style="display:block;">Could not load your posts: ${escapeHTML(err.message)}</div>`;
+    }
+  }
+
+  async function deletePost(id) {
+    try {
+      await apiRequest(`/posts/${id}`, { method: 'DELETE' });
+      await loadMyPosts();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+
+</body>
 </html>

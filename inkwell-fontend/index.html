@@ -17,12 +17,37 @@
             </div>
         </header>
         <main class="container">
-            <div id="postList"></div>
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="Search posts.." class="filter-input">
+                <select id="categorySelect" class="filter-input"></select>
+            </div>
+            <div id="postList">
+                <p class="form-note">Loading posts..</p>
+            </div>
         </main>
 
         <script src="script.js"></script>
         <script>
-            function renderPosts(){
+            let debounceTimer;
+            async function loadCategories(){
+                const select = document.getElementById('categoryselect');
+                try{
+                    const categories = await apiRequest('/posts/meta/ctegories');
+                    select.innerHTML='<option value ="All">All categories</option>'
+                    +categories.map(c=> `<option value ="${c}">${c}</option>`).join('');
+                }catch(err){
+                    select.innerHTML='<option value = "All">All categories</option>';
+                }
+            }
+            async function renderPosts(){
+                const list = document.getElementById('postList');
+                const search = document.getElementById('searchInput').value.trim();
+                const category = document.getElementById('categorySelect').value;
+
+                const params =new URLSearchParams();
+                if(search) params.set('search', search);
+                if(category && category !=='All')params.set('category', category);
+            try{
                 const posts=getPosts().slice().sort((a,b)=> new Date(b.date)-new Date(a.date));
                 const list=document.getElementById('postList');
                 if(posts.length===0){
@@ -36,7 +61,10 @@
         <p class="post-excerpt">${escapeHTML(p.content).slice(0, 160)}${p.content.length > 160 ? '…' : ''}</p>
       </article>
     `).join('');
+  }catch(err){
+    list.innerHTML=`<div class ="error-message" style="display:block;">Could not load posts: ${escapeHTML(err.message)}. Is the backend server running?</div>`;
   }
+}
 
   function formatDate(iso) {
     const d = new Date(iso);
@@ -49,7 +77,16 @@
     return div.innerHTML;
   }
 
-  document.addEventListener('DOMContentLoaded', renderPosts);
+  document.addEventListener('DOMContentLoaded', async()=>{
+    await loadCategories();
+    await renderPosts();
+
+    document.getElementById('searchInput').addEventListener('input',()=>{
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(renderPosts, 300);
+    });
+    document.getElementById('categorySelect').addEventListener('change',renderPosts);
+  });
 </script>
     </body>
 </html>
