@@ -46,10 +46,8 @@
 <script src="script.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
-    if (!isLoggedIn()) {
-      location.href = 'login.html';
-      return;
-    }
+    const user = await requireLogin();
+    if(!user) return;
     document.getElementById('formRoot').style.display = 'block';
 
     try {

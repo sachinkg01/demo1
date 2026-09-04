@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Profile</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">Ink<span>well</span></div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <span data-auth-slot style="display:contents"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container" id="profileRoot" style="display:none;">
+  <h1>Your profile</h1>
+  <p class="form-note" id="memberSince" style="margin-bottom:32px;"></p>
+
+  <div class="error-message" id="nameError"></div>
+  <h2 style="font-size:1.15rem;">Account details</h2>
+  <form class="stack" id="nameForm" style="margin-bottom:40px;">
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" required>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" disabled style="background:#F2EEE1; color: var(--ink-soft);">
+      <p class="form-note">Email can't be changed.</p>
+    </div>
+    <button type="submit" class="btn-primary" id="nameSubmitBtn" style="align-self:flex-start;">Save name</button>
+  </form>
+
+  <div class="error-message" id="passError"></div>
+  <h2 style="font-size:1.15rem;">Change password</h2>
+  <form class="stack" id="passForm">
+    <div class="field">
+      <label for="currentPassword">Current password</label>
+      <input type="password" id="currentPassword">
+    </div>
+    <div class="field">
+      <label for="newPassword">New password</label>
+      <input type="password" id="newPassword" minlength="6">
+      <p class="form-note">At least 6 characters.</p>
+    </div>
+    <button type="submit" class="btn-primary" id="passSubmitBtn" style="align-self:flex-start;">Update password</button>
+  </form>
+
+  <hr style="border:none; border-top:1px solid var(--border); margin:40px 0;">
+  <a href="#" id="logoutBtn" class="btn btn-outline">Log out</a>
+</main>
+<script src="script.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async function(){
+        const user= await requireLogin();
+        if(!user) return;
+
+        document.getElementById('profileRoot').style.display='block';
+        document.getElementById('name').value=user.name;
+        document.getElementById('email').value = user.email;
+        document.getElementById('memberSince').textContent= 
+        `Member since ${new Date(user.createAt).toLocaleDateString('en-US',{month:'long', year:'numeric'})}`;
+
+        document.getElementById('logoutBtn').addEventListener('click', (e)=>{
+            e.preventDefault();
+            clearSession();
+            location.href='index.html';
+        });
+    });
+
+    document.getElementById('nameForm').addEventListener('submit', async function(e){
+        e.preventDefault();
+        const name = document.getElementById('name').value.trim();
+        const errorBox= document.getElementById('nameError');
+        const btn = document.getElementById('namesubmitBtn');
+
+        errorBox.style.display ='none';
+        btn.disabled= true;
+        btn.textContent='saving..';
+
+        try{
+            const updated = await apiRequest('/auth/me',{
+                method:'PUT',
+                body:JSON.stringify({name})
+            });
+            setSession(getToken(), updated.name);
+            btn.textContent ='Saved';
+            setTimeout(()=>{btn.textContent='save name'; btn.disabled = false;},1200);
+        } catch(err){
+            errorBox.textContent=err.message;
+            errorBox.style.display ='block';
+            btn.disabled = false;
+            btn.textContent='save name';
+        }
+    });
+
+    document.getElementById('passForm').addEventListener('submit',async function (e){
+        e.preventDefault();
+        const currentPassword= document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const errorBox =document.getElementById('passError');
+        const btn = document.getElementById('passSubmitBtn');
+
+        errorBox.style.display='none';
+        if(!currentPassword || !newPassword){
+            errorBox.textContent='Fill in both fields to charge your password.';
+            errorBox.style.display='block';
+            return;
+        }
+        btn.disabled=true;
+        btn.textContent='Updating..';
+
+        try{
+            await apiRequest('/auth/me',{
+                method:'PUT',
+                body:JSON.stringify({currentPassword,newPassword})
+            });
+            document.getElementById('currentPassword').value='';
+            document.getElementById('newPassword').value ='';
+            btn.textContent='Updated';
+            setTimeout(()=>{btn.textContent='Update password'; btn.disabled=false;},1200);
+        }catch(err){
+            errorBox.textContent=err.message;
+            errorBox.style.display='block';
+            btn.disabled=false;
+            btn.textContent='Update password';
+        }
+        
+    });
+</script>
+
+</body>
+</html>

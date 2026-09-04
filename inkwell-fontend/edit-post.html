@@ -47,10 +47,8 @@
     const params = new URLSearchParams(location.search);
     const postId = params.get('id');
     document.addEventListener('DOMContentLoaded',async function(){
-        if(!isLoggedIn()){
-            location.href='login.html';
-            return;
-        }
+        const user = await requireLogin();
+        if(!user) return;
         if(!postId){
             location.href='dashboard.html';
             return;

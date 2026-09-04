@@ -41,10 +41,8 @@
 <script src="script.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
-    if (!isLoggedIn()) {
-      location.href = 'login.html';
-      return;
-    }
+    const user = await requireLogin();
+    if(!user) return;
 
     document.getElementById('dashRoot').style.display = 'block';
     document.getElementById('greeting').textContent = `Welcome back, ${getUserName().split(' ')[0]}`;

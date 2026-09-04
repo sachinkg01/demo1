@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -57,4 +58,47 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.get('/me',requireAuth, async(req, res)=>{
+  try{
+    const user = await User.findById(req.userId).select('-password');
+    if(!user){
+      return res.status(404).json({message:'User not found.'});
+    }
+    res.json({id:user._id, name:user.name,email:user.email, createdAt:user.createdAt});
+  }catch (err){
+    res.status(500).json({message:'Could not load your profile.', error:err.message});
+  }
+});
+
+router.put('/me', requireAuth, async (req, res)=> {
+  try{
+    const {name, currentPassword, newPassword}= req.body;
+    const user =await User.findById(req.userId);
+    if(!user){
+      return res.status(404).json({message:'User not found.'});
+    }
+    if(name)user.name=name;
+    if(newPassword){
+      if(!currentPassword){
+        return res.status(400).json({message:'Enter your current password to set a new one.'});
+      }
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if(!match){
+        return res.status(401).json({message:'Current password is incorrect.'});
+      }
+      if(newPassword.length<6){
+        return res.status(400).json({message:'New password must be at least 6 character.'});
+      }
+      user.password= await bcrypt.hash(newPassword,10);
+    }
+    await user.save();
+    if(name){
+      const Post =require('../models/Post');
+      await Post.updateMany({ author:user._id},{authorName:user.name});
+    }
+    res.json({id:user._id, name:user.name, email:user.email, createdAt:user.createdAt});
+  }catch(err){
+    res.status(500).json({message:'Could not update your profile.', error:err.message});
+  }
+});
 module.exports = router;
