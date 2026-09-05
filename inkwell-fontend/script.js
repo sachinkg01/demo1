@@ -3,7 +3,7 @@
    Only the auth token and cached user name are kept in localStorage;
    all real data (users, posts) now lives in the database. */
 
-const API_BASE = 'http://localhost:5000/api'; // change this to your deployed backend URL later
+const API_BASE = 'https://inkwell-backend.onrender.com/api'; // change this to your deployed backend URL later
 
 const SESSION = {
   token: 'inkwell_token',
